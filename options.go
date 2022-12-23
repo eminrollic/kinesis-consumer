@@ -12,7 +12,7 @@ type Option func(*Consumer)
 // WithGroup overrides the default storage
 func WithGroup(group Group) Option {
 	return func(c *Consumer) {
-		c.group = group
+		c.Group = group
 	}
 }
 

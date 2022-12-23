@@ -59,8 +59,8 @@ func New(streamName string, opts ...Option) (*Consumer, error) {
 	}
 
 	// default group consumes all shards
-	if c.group == nil {
-		c.group = NewAllGroup(c.client, c.store, streamName, c.logger)
+	if c.Group == nil {
+		c.Group = NewAllGroup(c.client, c.store, streamName, c.logger)
 	}
 
 	return c, nil
@@ -73,7 +73,7 @@ type Consumer struct {
 	initialTimestamp         *time.Time
 	client                   kinesisClient
 	counter                  Counter
-	group                    Group
+	Group                    Group
 	logger                   Logger
 	store                    Store
 	scanInterval             time.Duration
@@ -107,7 +107,7 @@ func (c *Consumer) Scan(ctx context.Context, fn ScanFunc) error {
 	)
 
 	go func() {
-		c.group.Start(ctx, shardc)
+		c.Group.Start(ctx, shardc)
 		<-ctx.Done()
 		close(shardc)
 	}()
@@ -142,7 +142,7 @@ func (c *Consumer) Scan(ctx context.Context, fn ScanFunc) error {
 // for each record and checkpoints the progress of scan.
 func (c *Consumer) ScanShard(ctx context.Context, shardID string, fn ScanFunc) error {
 	// get last seq number from checkpoint
-	lastSeqNum, err := c.group.GetCheckpoint(c.streamName, shardID)
+	lastSeqNum, err := c.Group.GetCheckpoint(c.streamName, shardID)
 	if err != nil {
 		return fmt.Errorf("get checkpoint error: %w", err)
 	}
@@ -204,7 +204,7 @@ func (c *Consumer) ScanShard(ctx context.Context, shardID string, fn ScanFunc) e
 					}
 
 					if err != ErrSkipCheckpoint {
-						if err := c.group.SetCheckpoint(c.streamName, shardID, *r.SequenceNumber); err != nil {
+						if err := c.Group.SetCheckpoint(c.streamName, shardID, *r.SequenceNumber); err != nil {
 							return err
 						}
 					}
